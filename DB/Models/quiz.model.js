@@ -3,8 +3,8 @@ import mongoose, { Schema, Types, model } from "mongoose";
 const questionSchema = new Schema({
     text: { type: String },
     options: [{
-        answer: { type: String },
-        isCorrect: { type: Boolean, default: false }
+        answer: { type: String , default : null},
+        isCorrect: { type: Boolean }
     }],
     points: { type: Number, default: 0 }
 })

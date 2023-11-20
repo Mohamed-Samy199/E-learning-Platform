@@ -47,9 +47,9 @@ export const solveQuiz = async (req, res, next) => {
 
     let progress = [];
     const course = await courseModel.findById(courseId);
-    const quiz = await quizModel.findById(quizId);
+    const quizzes = await quizModel.findById(quizId);
 
-    if (!quiz || !course) {
+    if (!quizzes || !course) {
         return next(new Error("Invalid course or quiz id", { cause: 400 }));
     }
 
@@ -58,6 +58,7 @@ export const solveQuiz = async (req, res, next) => {
     }
 
     if (Math.max(...progress) === 100) {
+        let totalScore = 0;
         if (!Array.isArray(questionsText)) {
             return res.status(400).json({ error: 'Invalid question data' });
         }
@@ -66,22 +67,24 @@ export const solveQuiz = async (req, res, next) => {
             const { options = [] } = question;
             const formattedOptions = Array.isArray(options)
                 ? options.map((option) => {
-                    const { answer, isCorrect } = option;
-                    return { answer, isCorrect };
+                    const { answer } = option;
+                    return { answer };
                 })
                 : [];
 
             return { options: formattedOptions };
         });
 
-        let totalScore = 0;
-        // Update points in questions based on correct answers
-        for (const question of questions) {
-            for (const option of question.options) {
-                if (option.isCorrect) {
-                    // Increment points if isCorrect is true
-                    question.points = 1;
-                    totalScore += question.points || 0;
+        for (const quiz of quizzes.questionsText) {
+            for (const optionQustion of quiz.options) {
+                for (const question of questions) {
+                    for (const option of question.options) {
+                        if (optionQustion.answer == option.answer && optionQustion.isCorrect) {
+                            //Increment points if isCorrect is true
+                            question.points = 1;
+                            totalScore += question.points || 0;
+                        }
+                    }
                 }
             }
         }
@@ -138,5 +141,7 @@ export const solveQuiz = async (req, res, next) => {
         const savedSolve = await quizModel.findOneAndUpdate({ _id: quizId }, { answersText: questions, results }, { new: true });
 
         return res.status(200).json({ message: "Done", savedSolve });
+    } else {
+        return next(new Error("You must see all lesson of course" , {cause : 409}));
     }
 }

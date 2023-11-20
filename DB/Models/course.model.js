@@ -14,10 +14,9 @@ const courseSchema = new Schema({
     startDate: { type: String, default: null },
     endDate: { type: String, default: null },
     isDeleted: { type: Boolean, default: false }, //20
-    // userEnrollment: { type: Number },
-    userEnrollment : [{
-        userId : {type : Types.ObjectId , ref : "User" , unique : true},
-        couseId : {type : Types.ObjectId , ref : "Course"},
+    userEnrollmentt : [{
+        userId : {type : Types.ObjectId , ref : "User"},
+        courseId : {type : Types.ObjectId , ref : "Course"},
         enrollmentDate : {type : Date , default : Date.now}
     }],
     numOfUserEnroll : {type : Number},
@@ -40,8 +39,15 @@ const courseSchema = new Schema({
     createdBy: { type: Types.ObjectId, ref: 'User', required: true },
     updatedBy: { type: Types.ObjectId, ref: 'User' }
 }, {
-    timestamps: true
+    timestamps: true, 
+    toJSON : {virtuals : true},
+    toObject : {virtuals : true}
 });
+courseSchema.virtual('review' , {
+    ref : 'Review',
+    localField : '_id',
+    foreignField : 'courseId'
+})
 
 const courseModel = mongoose.models.Course || model('Course', courseSchema);
 export default courseModel;

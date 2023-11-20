@@ -3,16 +3,8 @@ import mongoose, { Schema, Types, model } from "mongoose";
 const lessonSchema = new Schema({
     title: { type: String, required: true },
     slug: { type: String, required: true },
-    order: { type: Number, required: true, unique: true },
-    // counter: {
-    //     type: Number,
-    //     default: 1, // Initialize to 1 for the first lesson
-    // },
-    Sequence: {
-        type: Number,
-        default: 1,
-        unique: true,
-    },
+    order: { type: Number, required: true },
+    Sequence: {type: Number,default: 1},
 
     courseId: { type: Types.ObjectId, ref: "Course", required: true },
     progressId: { type: Types.ObjectId, ref: "Progress", },
@@ -52,6 +44,11 @@ lessonSchema.virtual('progress', {
     ref: 'Progress',
     localField: '_id',
     foreignField: 'lessonId'
+});
+lessonSchema.virtual('comment', {
+    ref: 'Comment',
+    localField: '_id',
+    foreignField: 'lessonId'
 })
 
 lessonSchema.pre('save', async function (next) {
@@ -60,9 +57,15 @@ lessonSchema.pre('save', async function (next) {
     }
 
     try {
-        const latestLesson = await lessonModel.findOne({}, {}, { sort: { Sequence: -1 } });
-        const sequence = latestLesson ? latestLesson.Sequence + 1 : 1;
+        // Find the latest lesson for the current course
+        const latestLessonForCourse = await lessonModel
+            .findOne({ courseId: this.courseId })
+            .sort({ Sequence: -1 });
+
+        // Determine the sequence number based on the latest lesson for the course
+        const sequence = latestLessonForCourse ? latestLessonForCourse.Sequence + 1 : 1;
         this.Sequence = sequence;
+
         return next();
     } catch (error) {
         return next(error);

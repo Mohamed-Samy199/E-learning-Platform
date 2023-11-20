@@ -14,39 +14,48 @@ export const addComment = async (req, res, next) => {
     req.body.createdBy = req.user._id;
     const comment = await commentModel.create(req.body);
     return res.status(201).json({ message: "Done", comment });
-}
-export const removeComment = async (req , res , next) => {
-    const {commentId} = req.params;
-    const comment = await commentModel.findOneAndDelete({_id : commentId , createdBy : req.user._id});
+};
+export const removeComment = async (req, res, next) => {
+    const { commentId } = req.params;
+    const comment = await commentModel.findOneAndDelete({ _id: commentId, createdBy: req.user._id });
     if (!comment) {
-        return next(new Error("can not delete comment" , {cause : 400}));
+        return next(new Error("can not delete comment", { cause: 400 }));
     }
 
-    return res.status(200).json({message : "Done"});
-}
+    return res.status(200).json({ message: "Done" });
+};
 export const addReply = async (req, res, next) => {
     req.body.lessonId = req.params.lessonId;
-    const comment = await commentModel.findById({ _id: req.params.commentId, lessonId: req.params.lessonId });
+
+    const comment = await commentModel.findOneAndUpdate(
+        { _id: req.params.commentId, lessonId: req.params.lessonId },
+        {
+            $push: {
+                reply: {
+                    repliedBy: req.user._id,
+                    textReply: req.body.textReply,
+                    commentId: req.params.commentId,
+                },
+            },
+        },
+        { new: true }
+    );
+
     if (!comment) {
         return next(new Error("In-valid comment id", { cause: 400 }));
     }
-    const reply = await commentModel.findOneAndUpdate({ _id: req.params.commentId }, 
-        {$push : {reply : { repliedBy: req.user._id, textReply: req.body.textReply, commentId: comment._id }}}
-        ,{new : true});
-    if (!reply) {
-        return next(new Error("can not update", { cause: 409 }))
-    }
+
     return res.status(201).json({ message: "Done", comment });
-}
-export const removeReply = async (req , res , next) => {
-    const {replyId , commentId} = req.params;
+};
+export const removeReply = async (req, res, next) => {
+    const { replyId, commentId } = req.params;
     const reply = await commentModel.findOneAndUpdate(
-        { _id : commentId}, 
-        {$pull : {reply :  {_id : replyId}  }}
-        ,{new : true});
+        { _id: commentId },
+        { $pull: { reply: { _id: replyId } } }
+        , { new: true });
     if (!reply) {
         return next(new Error("replay not found", { cause: 400 }));
     }
 
-    return res.status(200).json({message : "Done"});
-}
+    return res.status(200).json({ message: "Done" });
+};

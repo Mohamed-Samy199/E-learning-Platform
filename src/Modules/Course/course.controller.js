@@ -6,8 +6,12 @@ import { nanoid, customAlphabet } from "nanoid";
 import moment from "moment/moment.js";
 import userModel from "../../../DB/Models/user.model.js";
 
-export const courseModule = (req, res, next) => {
-    return res.status(200).json({ message: 'Course Module' });
+// course
+export const courseModule = async (req, res, next) => {
+    const course = await courseModel.find({}).populate([{
+        path : 'review'
+    }]);
+    return res.status(200).json({ message: 'Course Module' , course});
 }
 export const createCourse = async (req, res, next) => {
     const { title, price, discount, categoryId } = req.body;
@@ -78,25 +82,33 @@ export const updateCourse = async (req, res, next) => {
 }
 // instructor implement
 export const addInstructorOnCourse = async (req, res, next) => {
-    const { courseId } = req.params;
+    const { courseId , instructorId } = req.params;
     if (!await courseModel.findById(courseId)) {
         return next(new Error("In-valid course id", { cause: 400 }));
     }
-    const instructor = await userModel.findOneAndUpdate({ _id: req.user._id }, { $addToSet: { instructor: courseId } }, { new: true });
+    const instructor = await userModel.findOneAndUpdate({ _id: instructorId , role : "Instructor" }, { $addToSet: { instructor: courseId } }, { new: true });
     if (!instructor) {
         return next(new Error("can not instructor", { cause: 400 }));
+    }
+    const instructorOnCourse = await courseModel.findOneAndUpdate({_id : courseId  }, { $addToSet: { instructorId } }, { new: true });
+    if (!instructorOnCourse) {
+        return next(new Error("can not add instructor on course", { cause: 400 }));
     }
     let numOfInstructors = instructor.instructor.length;
     return res.status(201).json({ message: "Done", numOfInstructors, instructor: instructor.instructor });
 }
 export const removeInstructor = async (req, res, next) => {
-    const { courseId } = req.params;
+    const { courseId , instructorId} = req.params;
     if (!await courseModel.findById(courseId)) {
         return next(new Error("In-valid course id", { cause: 400 }));
     }
-    const instructor = await userModel.findOneAndUpdate({ _id: req.user._id }, { $pull: { instructor: courseId } }, { new: true });
+    const instructor = await userModel.findOneAndUpdate({ _id: instructorId }, { $pull: { instructor: courseId } }, { new: true });
     if (!instructor) {
         return next(new Error("can not instructor", { cause: 400 }));
+    }
+    const removeInstructorOnCourse = await courseModel.findOneAndUpdate({_id : courseId  }, { $pull: { instructorId } }, { new: true });
+    if (!removeInstructorOnCourse) {
+        return next(new Error("can not remove instructor on course", { cause: 400 }));
     }
     return res.status(201).json({ message: "Done", instructor: instructor.instructor });
 }
@@ -119,7 +131,7 @@ export const addToWishlist = async (req, res, next) => {
         return next(new Error("can not add to wishlist", { cause: 400 }));
     }
     let numOfWishlistCourses = wishlist.wishlist.length;
-    return res.status(201).json({ message: "Done", wishlist, numOfWishlistCourses });
+    return res.status(201).json({ message: "Done", wishlist : wishlist.wishlist, numOfWishlistCourses });
 }
 export const removeWishlist = async (req, res, next) => {
     const { courseId } = req.body;

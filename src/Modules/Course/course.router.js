@@ -14,8 +14,8 @@ courseRouter.get("/", asyncHandle(courseModule));
 courseRouter.post("/", auth(endPoint.admin), myMulter({}).single("image"), asyncHandle(createCourse));
 courseRouter.put("/:courseId", auth(endPoint.admin), myMulter({}).single("image"), asyncHandle(updateCourse));
 
-courseRouter.post("/instructor/:courseId", auth(endPoint.admin), asyncHandle(addInstructorOnCourse));
-courseRouter.delete("/instructor/:courseId", auth(endPoint.admin), asyncHandle(removeInstructor));
+courseRouter.post("/instructor/:courseId/:instructorId", auth(endPoint.admin), asyncHandle(addInstructorOnCourse));
+courseRouter.delete("/instructor/:courseId/:instructorId", auth(endPoint.admin), asyncHandle(removeInstructor));
 
 courseRouter.get("/wishlist", auth(endPoint.user), asyncHandle(getWishlist));
 courseRouter.patch("/wishlist", auth(endPoint.user), asyncHandle(addToWishlist));

@@ -3,6 +3,7 @@ import mongoose, { Schema, Types, model } from "mongoose";
 const progressSchema = new Schema({
     userId : { type: Types.ObjectId, ref: "User", required: true },
     lessonId : {type : Types.ObjectId , ref : "Lesson" , required : true},
+    courseId : {type : Types.ObjectId , ref : "Course" , required : true},
     progress : {type : Number , default : 0},
     isCompleted : {type :Boolean , default : false}
 },{

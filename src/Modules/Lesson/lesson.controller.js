@@ -18,43 +18,42 @@ export const getlessonByVisibilty = async (req, res, next) => {
     return res.status(200).json({ message: "Done", lessons });
 
 }
-export const lessonMedule = async (req, res, next) => {
-    const lesson = await lessonModel.find({}).sort('order').populate([
-        {
-            path: "courseId" //parent
-        },
-        {
-            path: "progress" //child
-        }
-    ])
-    return res.status(200).json({ message: "Lesson Module", lesson })
-}
 export const getLesson = async (req, res, next) => {
     const { courseId } = req.params;
     if (!await courseModel.findById(courseId)) {
         return next(new Error("in-valid course id", { cause: 400 }));
     }
-    const lesson = await lessonModel.find({}).sort('order');
+    const lesson = await lessonModel.find({courseId}).sort('order').populate([
+        {
+            path: "courseId" //parent
+        },
+        {
+            path: "progress" //child
+        },
+        {
+            path: "comment" //child
+        }
+    ])
     return res.status(200).json({ message: "Lesson Module", lesson })
 }
-
 export const createLesson = async (req, res, next) => {
     const { courseId } = req.params;
     const { title, order, description, content, duration, visibility } = req.body;
-    if (await lessonModel.findOne({ order })) {
+    if (await lessonModel.findOne({ order , courseId })) {
         return next(new Error(`Dublicate category order ${order}`, { cause: 409 }))
     }
     let slug = slugify(title, { trim: true, lower: true });
     if (!await courseModel.findById(courseId)) {
         return next(new Error("in-valid course id", { cause: 400 }));
     }
-    const lessons = await lessonModel.find({});
+    const lessons = await lessonModel.find({courseId});
     let prerequisites = []
     for (const lsn of lessons) {
         prerequisites.push(lsn._id)
     }
     let customId = nanoid(6);
     let video = {}
+    
     if (req.files.video) {
         const { secure_url, public_id } = await cloudinary.uploader.upload(req.files.video[0].path, {
             resource_type: "video",
@@ -62,7 +61,7 @@ export const createLesson = async (req, res, next) => {
         })
         video = { secure_url, public_id }
     }
-
+    
     let fileDownload = [];
     if (req.files.fileDownload) {
         for (const file of req.files.fileDownload) {

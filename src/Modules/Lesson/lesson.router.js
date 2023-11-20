@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { asyncHandle } from "../../Utils/errorHandle.js";
-import { createLesson, getLesson, getlessonByVisibilty, lessonMedule, likeLesson, unlikeLesson, updateLesson } from "./lesson.controller.js";
+import { createLesson, getLesson, getlessonByVisibilty, likeLesson, unlikeLesson, updateLesson } from "./lesson.controller.js";
 import { auth } from "../../Middelware/authuntication.js";
 import { endPoint } from "./lesson.endpoint.js";
 import { myMulter } from "../../Utils/multer.js";
@@ -9,7 +9,6 @@ import { addComment, addReply, removeComment, removeReply } from "./lessonCommen
 
 const lessonRouter = Router({ mergeParams: true });
 
-lessonRouter.get("/", asyncHandle(lessonMedule));
 lessonRouter.get("/:courseId", asyncHandle(getLesson));
 
 lessonRouter.get(
